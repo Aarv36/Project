@@ -1,0 +1,48 @@
+import spacy
+from flask import Flask, request, jsonify
+
+# Initialize spaCy model for natural language understanding
+nlp = spacy.load("en_core_web_sm")
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Define chatbot responses
+responses = {
+    "greeting": ["Hello!", "Hi there!", "Hey!"],
+    "goodbye": ["Goodbye!", "Have a great day!", "See you later!"],
+}
+
+# Define a function to perform arithmetic calculations
+def calculate(expression):
+    try:
+        result = eval(expression)
+        return str(result)
+    except:
+        return "Sorry, I couldn't calculate that."
+
+# Define a function to handle chatbot responses
+def get_response(message):
+    doc = nlp(message.lower())
+    if "hello" in [token.text for token in doc]:
+        return responses["greeting"]
+    elif "goodbye" in [token.text for token in doc]:
+        return responses["goodbye"]
+    elif "calculate" in [token.text for token in doc]:
+        expression = message.split("calculate")[1].strip()
+        return [calculate(expression)]
+    elif "python" in [token.text for token in doc] and "programming" in [token.text for token in doc]:
+        return ["Python is a high-level programming language known for its readability and versatility."]
+    else:
+        return ["I'm sorry, I don't understand. Can you please rephrase your question?"]
+
+# Define a route for the chatbot API
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    user_message = request.json["message"]
+    response = get_response(user_message)
+    return jsonify({"response": response})
+
+# Start the Flask app
+if __name__ == "__main__":
+    app.run(debug=True)
